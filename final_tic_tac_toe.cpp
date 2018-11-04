@@ -1,8 +1,7 @@
-
 #include <iostream>
 #include <vector>
 #define FIRST 1  // PLAYER 1
-#define SECOND 2  // PLAYER 2
+#define SECOND -1  // PLAYER 2
 #define N 3      // Size of the Square Board
 
 using namespace std;
@@ -20,6 +19,7 @@ class TicTacToe {
  public:
   ///constructor for initialization
      TicTacToe();
+    ~TicTacToe();
 
   ///
   /// \brief MakeMove Interface for the game playing system to add a new move to
@@ -35,15 +35,14 @@ private:
   /// determine win conditions. The implementation should easily extend to different
   /// board sizes and run time should scale linearly (or better) with N.
   std::vector<std::vector<int>> state;
-  Player player;
+  Player player;  
   int count;
   int x,y;
+  int *row_count,*col_count,diaTL,diaBL;
   bool finish;
   bool invalid_location();
   bool Win();
-  bool row_check();
-  bool column_check();
-  bool diagonal_check();
+  void update_count();
 };
 
 TicTacToe::TicTacToe()    //Initialization
@@ -53,21 +52,31 @@ TicTacToe::TicTacToe()    //Initialization
         state[i].resize(N);
     for (int i=0;i<N;++i)
         for(int j=0;j<N;++j)
-            state[i][j] = -1;
+            state[i][j] = 0;
+    row_count = new int[N];
+    col_count = new int[N];
+    for(int i=0;i<N;i++)
+    {
+      row_count[i] = 0;
+      col_count[i] = 0;
+    }
+    diaTL=diaBL=0;
     count = N*N;
     finish = false;
-
+    
 }
+TicTacToe::~TicTacToe()
+{}
 Result TicTacToe::MakeMove(Player player, Location location)
 {
     if(finish)
       return "Invalid";
     x = location.x;
-    y = location.y;
+    y = location.y;  
     if(invalid_location())
         return "Invalid";
     ///Invalid move, location already occupied
-    if(state[x][y]!=-1)
+    if(state[x][y]!=0)
         return "Invalid";
     else
     {
@@ -79,6 +88,7 @@ Result TicTacToe::MakeMove(Player player, Location location)
             this->player = player;
         state[x][y] = player;
         count--;
+        update_count();
         ///Check for win
         if(Win())
         {
@@ -88,10 +98,10 @@ Result TicTacToe::MakeMove(Player player, Location location)
         //Also check if it is a draw
         else if(count==0)
         {
-            finish = true;
+            finish = true;    
             return "draw";
         }
-
+            
     }
     return "Valid Move";
 }
@@ -101,64 +111,22 @@ bool TicTacToe::invalid_location()
         return true;
     return false;
 }
-bool TicTacToe::row_check()
+void TicTacToe::update_count()
 {
-    ///row check for a win
-    for(int j=0; j < N; j++)
-    {
-        if(state[x][j]!=state[x][y])
-        {
-            return false;
-        }
-    }
-    return true;
+  row_count[x] += player;
+  col_count[y] += player;
+  if(x==y)
+    diaTL += player;
+  if(x==N-1-y)
+    diaBL += player;
+    
 }
-bool TicTacToe::column_check()
-{
-    ///column check for a win
-    for(int i=0; i < N; i++)
-    {
-        if(state[i][y]!=state[x][y])
-            return false;
-    }
-    return true;
-}
-bool TicTacToe::diagonal_check()
-{
-    ///diagonal check for a win
-    bool flag = false;
-    if(x==y)
-    {
-        flag = true;
-        for(int k=0; k < N; k++)
-        {
-            if(state[k][k]!=state[x][y])
-            {
-              flag = false;
-              break;
-            }
-        }
 
-    }
-    if(flag)
-        return true;
-    else if(x==N-y-1)
-    {
-        for(int k=0; k < N; k++)
-        {
-            if(state[k][N-k-1]!=state[x][y])
-                return false;
-        }
-        return true;
-    }
-    else
-        return false;
-}
 bool TicTacToe::Win()
 {
-    if(row_check()||column_check()||diagonal_check())
+    if(abs(row_count[x])==N||abs(col_count[y])==N || abs(diaTL)==N || abs(diaBL)==N)
     {
-      //state = vector <vector<int>> (N,vector<int>(N,player));
+      
       return true;
     }
     return false;
@@ -174,7 +142,7 @@ int main(int argc, char** argv) {
   // Check result is correct.
   Result result;
 
-  ///  Test cases for a win by first player when N = 3
+  /*///  Test cases for a win by first player when N = 3
   result = game.MakeMove(FIRST,Location(0,0));
   std::cout<<result<<std::endl;
   result = game.MakeMove(SECOND,Location(2,1));
@@ -184,13 +152,13 @@ int main(int argc, char** argv) {
   result = game.MakeMove(SECOND,Location(2,2));
   std::cout<<result<<std::endl;
   result = game.MakeMove(FIRST,Location(0,2));
-  std::cout<<result<<std::endl;
+  std::cout<<result<<std::endl;*/
   //result = game.MakeMove(SECOND,Location(2,0));
   //std::cout<<result<<endl;
-
-
+  
+  
   /// Test cases for a draw when N = 3
-  /*result = game.MakeMove(SECOND,Location(0,0));
+  result = game.MakeMove(SECOND,Location(0,0));
   cout<<result<<endl;
   result = game.MakeMove(FIRST,Location(0,1));
   cout<<result<<endl;
@@ -207,34 +175,25 @@ int main(int argc, char** argv) {
   result = game.MakeMove(FIRST,Location(2,0));
   cout<<result<<endl;
   result = game.MakeMove(SECOND,Location(2,1));
-  cout<<result<<endl;*/
-
-
-
-  /// Test case for a repeated move by the same player when N=2,3
+  cout<<result<<endl;
+  
+  
+ 
+  /// Test case for a repeated move by the same player when N=3
   /*result = game.MakeMove(FIRST,Location(0,0));
   cout<<result<<endl;
   result = game.MakeMove(FIRST,Location(0,1));
   cout<<result<<endl;*/
-
+  
   /// Test case for a move when location is previously occupied by the other player
   /*result = game.MakeMove(FIRST,Location(0,0));
   cout<<result<<endl;
   result = game.MakeMove(SECOND,Location(0,0));
   cout<<result<<endl;*/
-
+  
   /// Test case for a move when location is outside the scope of the board N=3
   /*result = game.MakeMove(FIRST,Location(0,5));
   cout<<result<<endl;*/
-
-
-
-
-
-
-
-
+  
  return 0;
 }
-
-
